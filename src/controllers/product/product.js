@@ -1,31 +1,42 @@
 const { Pool } = require('pg');
-const pool = new Pool;
+const validateInput = require('../../utils/validate');
 
-// Create product controller
+const connectionString = process.env.DATABASE_URL
+
+  const pool = new Pool({
+    connectionString,
+  });
+  
+// Create product
 const createProduct = async (req, res) => {
-  const { name, description, price, category, image, color } = req.body;
-  name = name.trim()
-  description.trim()
-  price.trim()
-  category.trim()
-  image.trim()
-  color.trim()
-  if (!name || !description || !price || !category || !image || !color) {
+
+  let { name, description, price, category, image, color } = req.body;
+  const isEmpty = validateInput.isEmpty(name, description, price, category, image, color);
+
+  if (isEmpty) {
     return res.status(400).send({
       error: true,
       message: 'All fields are required'
     });
   }
-
-  if (typeof price !== Number) {
+  
+  if (typeof price !== 'number') {
     return res.status(400).send({
       error: true,
       message: 'Price must be a valid number'
     });
   }
 
+  // Sanitize data before saving into the database
+  name = name.trim();
+  description = description.trim();
+  price = parseFloat(price, 10);
+  category = category.trim();
+  image = image.trim();
+  color = color.trim();
+
   const insertQuery = 'INSERT INTO products(name, description, price, category, image, color) VALUES($1, $2, $3, $4, $5, $6) RETURNING *'
-  const values = [name, description, price, category, image, color]
+  const values = [name, description, price, category, image, color];
 
   try {
     const result = await pool.query(insertQuery, values);
@@ -33,7 +44,7 @@ const createProduct = async (req, res) => {
       return res.status(201).send({
         error: false,
         message: 'Product successfully created',
-        data: result
+        data: result.rows
       });
     }
   } catch (error) {
@@ -48,11 +59,11 @@ const createProduct = async (req, res) => {
 const getAllProducts = async (req, res) => {
   const getAllProductsQuery = `SELECT id, name, price FROM products`;
   try {
-    const products = pool.query(getQuery);
+    const products = await pool.query(getAllProductsQuery);
     return res.status(200).send({
       error: false,
       message: 'Below are all the products',
-      data: products
+      data: products.rows
     });
   } catch (error) {
     return res.status(500).send({
@@ -63,7 +74,7 @@ const getAllProducts = async (req, res) => {
 }
 
 // Get a single product
-const getSingleProduct = async () => {
+const getSingleProduct = async (req, res) => {
   const { id } = req.params;
   if (!id) {
     return res.status(400).send({
@@ -76,7 +87,7 @@ const getSingleProduct = async () => {
 
   try {
     const product = await pool.query(getSingleProductQuery, values);
-    if (product.length === 0) {
+    if (product.rows.length === 0) {
       return res.status(404).send({
         error: true,
         message: 'Product not found'
@@ -86,7 +97,7 @@ const getSingleProduct = async () => {
     return res.status(200).send({
       error: false,
       message: 'Below is the product',
-      data: product
+      data: product.rows
     });
   } catch (error) {
     return res.status(500).send({
