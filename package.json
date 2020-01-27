@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prestart": "node src/db/connect.js",
     "start": "node app.js",
     "predev": "node src/db/connect.js",
     "dev": "nodemon app.js",
