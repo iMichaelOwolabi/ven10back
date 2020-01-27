@@ -107,31 +107,8 @@ const getSingleProduct = async (req, res) => {
   }
 }
 
-  // Get a single product
-const getLastAddedProduct = async (req, res) => {
-  
-  const getLastProductQuery = `SELECT * FROM products ORDER BY id DESC LIMIT 1`;
-
-  try {
-    const lastAddedroduct = await pool.query(getLastProductQuery);
-
-    return res.status(200).send({
-      error: false,
-      message: 'Recently added product',
-      data: lastAddedroduct.rows
-    });
-  } catch (error) {
-    return res.status(500).send({
-      error: true,
-      message: 'Ooops! something went wrong. Try again later0000000',
-      error
-    });
-  }
-}
-
 module.exports = {
   createProduct,
   getAllProducts,
   getSingleProduct,
-  getLastAddedProduct
 }
